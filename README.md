@@ -1,12 +1,10 @@
-# PostmanUI
+# PostmanUI.NET
 
 # Steps to run locally
 
-1. Able to run .NET8
-2. Clone repository
-3. Open in VS Code, Run Task > Watch (Install https cert if needed)
+1. .NET8 SDK
+2. Clone repository in VS Code, Run Task > Watch (Install https cert if needed)
 4. Change Razor components in PostmanUI project, hot reload will pick up changes instantly
-
 
 # Documentation
 
