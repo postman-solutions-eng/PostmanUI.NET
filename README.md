@@ -1,13 +1,14 @@
 # PostmanUI.NET
 
 # What does it do?
-    - The NuGet package sets up a local Postman UI server for you while your application is running.
+- The NuGet package sets up a local Postman UI server for you while your application is running.
 
-    - The Postman UI server knows about your swagger.json file (OpenAPI Specification), that is exposed through the AddSwaggerGen middleware.
-        - Using the specification, we are able to rapidly build collections on demand using a conversion tool from the OpenAPI format > Postman Collection format.
-        - Instead of showing the Swagger UI page, it shows a nice looking OpenAPI viewer, as well as a few other tools to bring productivity closer to your development workflow.
+- The Postman UI server knows about your swagger.json file (OpenAPI Specification), that is exposed through the     AddSwaggerGen middleware.
 
-    - All endpoints are hosted by you, your Postman data does not leave your local machine. You are able to input your Postman API key to authenticate and automate collection creation to your own workspace, and it will not leave your local machine.
+- Using the specification, we are able to rapidly build collections on demand using a conversion tool from the OpenAPI format > Postman Collection format.
+    - Instead of showing the Swagger UI page, it shows a nice looking OpenAPI viewer, as well as a few other tools to bring productivity closer to your development workflow.
+
+- All endpoints are hosted by you, your Postman data does not leave your local machine. You are able to input your Postman API key to authenticate and automate collection creation to your own workspace, and it will not leave your local machine.
 
 # Steps to run locally
 
