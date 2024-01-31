@@ -13,7 +13,7 @@ namespace PostmanUIDemo
             app.MapGet("/test1", () =>
             {
             });
-
+            
             app.MapGet("/test2", () =>
             {
             });
