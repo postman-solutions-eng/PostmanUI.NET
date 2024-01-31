@@ -1,0 +1,60 @@
+﻿@using Microsoft.OpenApi.Models
+
+@code {
+    [Parameter]
+    public OpenApiDocument Swagger { get; set; }
+}
+
+<div class="m-5">
+    <input type="text" id="collectionName" placeholder="Enter collection name" class="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 w-full">
+</div>
+
+
+<div class="mr-4">
+    <div class="flex justify-left mt-12">
+        <h2 class="text-lg font-bold mr-2 px-3 py-1 ">Paths</h2>
+
+        <button id="selectAll" onclick="selectAll()" class="mr-2 px-3 py-1 bg-black text-white rounded hover:bg-gray-600 transition duration-300">Select All</button>
+        <button id="deselectAll" onclick="deselectAll()" class="px-3 py-1 bg-orange-700 text-white rounded hover:bg-red-600 transition duration-300">Deselect All</button>
+    </div>
+
+    <div class="space-y-2 p-4 rounded-lg">
+        @foreach (var path in Swagger.Paths)
+        {
+            <div onclick="toggleCheckbox('@path.Key', event)" class="flex items-center p-2 rounded transition-colors">
+                <input type="checkbox" id="@path.Key" name="paths" value="@path.Key" checked class="mr-2 h-5 w-5 accent-orange-600 border-gray-300 rounded">
+                <label for="@path.Key" class="text-md text-gray-700">@path.Key</label>
+            </div>
+        }
+    </div>
+
+    <div class="space-y-2 p-4 rounded-lg">
+        <button id="generate" onclick="generate()" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition duration-300">Generate</button>
+    </div>
+
+</div>
+
+<script suppress-error="BL9992">
+    function selectAll() {
+        document.querySelectorAll('input[name="paths"]').forEach(function (checkbox) {
+            checkbox.checked = true;
+        });
+
+        updateSwaggerDocument();
+    }
+
+    function toggleCheckbox(checkboxId) {
+        updateSwaggerDocument();
+    }
+
+    function deselectAll() {
+        document.querySelectorAll('input[name="paths"]').forEach(function (checkbox) {
+            checkbox.checked = false;
+        });
+
+        updateSwaggerDocument();
+    }
+</script>
+
+
+

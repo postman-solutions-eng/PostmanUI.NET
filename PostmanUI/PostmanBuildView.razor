@@ -1,0 +1,93 @@
+﻿@using Microsoft.OpenApi.Models
+@using System.Text.Json;
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postman Builder</title>
+    <script src="https://cdn.tailwindcss.com" suppress-error="BL9992"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@textea/json-viewer@3" suppress-error="BL9992"></script>
+</head>
+
+<body>
+    <div id="container" class="w-full">
+        <!-- Header -->
+
+        <div class="flex flex-row justify-left bg-white shadow text-black p-2">
+            <h1 class="text-lg font-bold">.NET Postman Collection Builder</h1>
+        </div>
+
+
+        <div class="flex flex-row h-screen" id="conversion">
+
+            <div class="w-1/3 h-full border-b border-black bg-gray-100 overflow-auto scrollbar-hide">
+                <h2 class="text-lg font-bold p-2 text-center">.NET API Specification</h2>
+                <div id="json-viewer" class="pt-4"></div>
+            </div>
+
+            <div class="w-1/3 h-full bg-gray-100 flex flex-col text-lg">
+                <h2 class="text-lg font-bold p-2 text-center">Build Collection</h2>
+                <div class="pt-4">
+                    <PostmanConfiguration Swagger="Swagger" />
+                </div>
+            </div>
+
+            <div class="w-1/3 h-full bg-gray-200 flex flex-col text-lg">
+                <h2 class="text-lg font-bold p-2 text-center">Generated Collection</h2>
+                <div class="p-4">
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script suppress-error="BL9992">
+        let swaggerContent = JSON.parse(@((MarkupString)JsonSerializer.Serialize(swaggerJson, jsonOptions)));
+        let originalContent = { ...swaggerContent };
+
+        let viewer = initializeJsonViewer();
+
+        function initializeJsonViewer() {
+            let viewer = new JsonViewer({ value: swaggerContent.Paths }).render('#json-viewer');
+            return viewer;
+        }
+
+        function updateSwaggerDocument() {
+            swaggerContent = { ...originalContent };
+
+            let checkedPaths = {};
+            document.querySelectorAll('input[name="paths"]:checked').forEach((checkbox) => {
+                let pathKey = checkbox.value;
+                if (swaggerContent.Paths && swaggerContent.Paths[pathKey]) {
+                    checkedPaths[pathKey] = swaggerContent.Paths[pathKey];
+                }
+            });
+
+            // Modify the Swagger object to keep only checked paths, and update the viewer
+            swaggerContent.Paths = checkedPaths;
+            viewer = new JsonViewer({ value: swaggerContent.Paths }).render('#json-viewer');
+        }
+
+        function generate() {
+            
+        }
+
+    </script>
+</body>
+
+<style>
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
+
+</html>
+
