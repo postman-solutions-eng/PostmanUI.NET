@@ -1,0 +1,100 @@
+@code {
+    [Parameter] public OpenApiDocument Swagger { get; set; }
+}
+
+<div id="tab-content" role="tabpanel" class="tab-content">
+    <div>
+        <div class="flex justify-end">
+            <div class="flex flex-row gap-2">
+                <div class="space-y-2 rounded-lg">
+                    <button id="generate" onclick="generate()" class="px-5 py-3 bg-orange-500 text-white rounded hover:bg-orange-400 transition duration-300">Generate</button>
+                </div>
+                <button id="toggleSelect" onclick="toggleSelect()" class="px-5 py-3 bg-gray-100 text-gray-800 border rounded hover:bg-gray-200 transition duration-300">
+                    Deselect All
+                </button>
+            </div>
+        </div>
+
+        <!-- Adjusted container for paths -->
+        <div class="rounded-lg pb-32">
+            @{
+                var groupedPaths = Swagger?.Paths?.GroupBy(p => p.Key.Split('/')[1])
+                .OrderBy(g => g.Key)
+                .ToList() ?? new List<IGrouping<string, KeyValuePair<string, OpenApiPathItem>>>();
+
+                foreach (var group in groupedPaths)
+                {
+                    <div class="mb-4">
+                        <div class="w-full text-left font-bold text-lg py-2">
+                            @if (group.Count() > 5)
+                            {
+                                <input type="checkbox" name="paths" onclick="toggleGroupSelection('@group.Key', this.checked)" checked class="mr-2 accent-orange-600 border-gray-300 rounded">
+                            }
+                            <button onclick="toggleGroupHidden('@group.Key')" class="flex-grow">
+                                <span>@group.Key</span>
+                                <i id="icon-@group.Key" class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+                        <div id="@group.Key" class="grid grid-cols-4 gap-4 p-2 border border-gray-300 shadow-sm">
+                            @foreach (var path in group)
+                            {
+                                <div onclick="toggleCheckbox('@path.Key', event)" class="flex items-center p-2 rounded transition-colors hover:bg-gray-100">
+                                    <input type="checkbox" id="@path.Key" name="paths" value="@path.Key" checked class="mr-2 h-4 w-4 accent-orange-600 border-gray-300 rounded">
+                                    <label for="@path.Key" class="text-md text-gray-700">@path.Key</label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+
+
+<script suppress-error="BL9992">
+    function toggleSelect() {
+        let checkboxes = document.querySelectorAll('input[name="paths"]');
+        let toggleButton = document.getElementById('toggleSelect');
+
+        // Determine the action based on the button's current text
+        let shouldSelectAll = toggleButton.textContent.includes('Select All');
+
+        // Set all checkboxes to the determined state
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = shouldSelectAll;
+        });
+
+        // Update button text based on the action taken
+        toggleButton.textContent = shouldSelectAll ? 'Deselect All' : 'Select All';
+
+        updateSwaggerDocument();
+    }
+
+    function toggleCheckbox(path, event) {
+        updateSwaggerDocument();
+    }
+
+    function toggleGroupSelection(groupId, isChecked) {
+        let groupDiv = document.getElementById(groupId);
+        if (groupDiv) {
+            let checkboxes = groupDiv.querySelectorAll('input[type="checkbox"][name="paths"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+
+            updateSwaggerDocument();
+        }
+    }
+
+    function toggleGroupHidden(groupId) {
+        var group = document.getElementById(groupId);
+        var icon = document.getElementById('icon-' + groupId);
+        if (group && icon) {
+            group.classList.toggle('hidden');
+            icon.classList.toggle('fa-chevron-down');
+            icon.classList.toggle('fa-chevron-up');
+        }
+    }
+</script>
