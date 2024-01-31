@@ -16,7 +16,7 @@
 2. Clone repository in VS Code, Run Task > Watch (Install https cert if needed)
 4. Change Razor components in PostmanUI project, hot reload will pick up changes instantly
 
-# Documentation
+# How does it work?
 
 - PostmanBuilderExtensions : Extension method adds a Minimal API endpoint which serves staticly rendered HTML + JS + TailwindCSS through the Razor templating engine.
 
