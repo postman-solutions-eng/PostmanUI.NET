@@ -1,52 +1,20 @@
-@code {
-    [Parameter] public OpenApiDocument Swagger { get; set; }
-}
-
 <div id="tab-content" role="tabpanel" class="tab-content">
     <div>
         <div class="flex justify-end">
             <div class="flex flex-row gap-2">
                 <div class="space-y-2 rounded-lg">
-                    <button id="generate" onclick="generate()" class="px-5 py-3 bg-orange-500 text-white rounded hover:bg-orange-400 transition duration-300">Generate</button>
+                    <button id="generate" onclick="generate()"
+                        class="px-5 py-3 bg-orange-500 text-white rounded hover:bg-orange-400 transition duration-300">Generate</button>
                 </div>
-                <button id="toggleSelect" onclick="toggleSelect()" class="px-5 py-3 bg-gray-100 text-gray-800 border rounded hover:bg-gray-200 transition duration-300">
+                <button id="toggleSelect" onclick="toggleSelect()"
+                    class="px-5 py-3 bg-gray-100 text-gray-800 border rounded hover:bg-gray-200 transition duration-300">
                     Deselect All
                 </button>
             </div>
         </div>
 
-        <!-- Adjusted container for paths -->
-        <div class="rounded-lg pb-32">
-            @{
-                var groupedPaths = Swagger?.Paths?.GroupBy(p => p.Key.Split('/')[1])
-                .OrderBy(g => g.Key)
-                .ToList() ?? new List<IGrouping<string, KeyValuePair<string, OpenApiPathItem>>>();
-
-                foreach (var group in groupedPaths)
-                {
-                    <div class="mb-4">
-                        <div class="w-full text-left font-bold text-lg py-2">
-                            @if (group.Count() > 5)
-                            {
-                                <input type="checkbox" name="paths" onclick="toggleGroupSelection('@group.Key', this.checked)" checked class="mr-2 accent-orange-600 border-gray-300 rounded">
-                            }
-                            <button onclick="toggleGroupHidden('@group.Key')" class="flex-grow">
-                                <span>@group.Key</span>
-                                <i id="icon-@group.Key" class="fas fa-chevron-down"></i>
-                            </button>
-                        </div>
-                        <div id="@group.Key" class="grid grid-cols-4 gap-4 p-2 border border-gray-300 shadow-sm">
-                            @foreach (var path in group)
-                            {
-                                <div onclick="toggleCheckbox('@path.Key', event)" class="flex items-center p-2 rounded transition-colors hover:bg-gray-100">
-                                    <input type="checkbox" id="@path.Key" name="paths" value="@path.Key" checked class="mr-2 h-4 w-4 accent-orange-600 border-gray-300 rounded">
-                                    <label for="@path.Key" class="text-md text-gray-700">@path.Key</label>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
-            }
+        <div id="swagger-paths-container" class="rounded-lg pb-32">
+            <!-- Dynamic content will be inserted here -->
         </div>
     </div>
 </div>
@@ -54,6 +22,82 @@
 
 
 <script suppress-error="BL9992">
+    async function loadAndDisplaySwaggerPaths() {
+        // Example: const swaggerJson = await fetchSwaggerJson();
+        const swaggerPaths = swaggerContent.paths; // Assuming swaggerJson is already fetched or defined
+
+        // Group paths by the first segment
+        const groupedPaths = Object.keys(swaggerPaths).reduce((acc, path) => {
+            const groupKey = path.split('/')[1]; // Adjust as needed
+            if (!acc[groupKey]) {
+                acc[groupKey] = [];
+            }
+            acc[groupKey].push(path);
+            return acc;
+        }, {});
+
+        const container = document.getElementById('swagger-paths-container');
+
+        Object.entries(groupedPaths).sort(([a], [b]) => a.localeCompare(b)).forEach(([groupKey, paths]) => {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'mb-4';
+
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'w-full text-left font-bold text-lg py-2';
+
+            if (paths.length > 5) {
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = 'paths';
+                checkbox.checked = true;
+                checkbox.className = 'mr-2 accent-orange-600 border-gray-300 rounded';
+                checkbox.onclick = () => toggleGroupSelection(groupKey, checkbox.checked);
+                headerDiv.appendChild(checkbox);
+            }
+
+            const button = document.createElement('button');
+            button.onclick = () => toggleGroupHidden(groupKey);
+            button.className = 'flex-grow';
+            button.innerHTML = `<span class="pr-2">${groupKey}</span><i id="icon-${groupKey}" class="fas fa-chevron-down"></i>`;
+            headerDiv.appendChild(button);
+
+            groupDiv.appendChild(headerDiv);
+
+            const pathsDiv = document.createElement('div');
+            pathsDiv.id = groupKey;
+            pathsDiv.className = 'grid grid-cols-4 gap-4 p-2 border border-gray-300 shadow-sm';
+
+            paths.forEach(path => {
+                const pathDiv = document.createElement('div');
+                pathDiv.className = 'flex items-center p-2 rounded transition-colors hover:bg-gray-100';
+                pathDiv.onclick = (event) => toggleCheckbox(path, event);
+
+                const pathCheckbox = document.createElement('input');
+                pathCheckbox.type = 'checkbox';
+                pathCheckbox.id = path;
+                pathCheckbox.name = 'paths';
+                pathCheckbox.value = path;
+                pathCheckbox.checked = true;
+                pathCheckbox.className = 'mr-2 h-4 w-4 accent-orange-600 border-gray-300 rounded';
+
+                const pathLabel = document.createElement('label');
+                pathLabel.htmlFor = path;
+                pathLabel.className = 'text-md text-gray-700';
+                pathLabel.textContent = path;
+
+                pathDiv.appendChild(pathCheckbox);
+                pathDiv.appendChild(pathLabel);
+                pathsDiv.appendChild(pathDiv);
+            });
+
+            groupDiv.appendChild(pathsDiv);
+            container.appendChild(groupDiv);
+        });
+    }
+
+    // Call the function to load and display the Swagger paths
+    loadAndDisplaySwaggerPaths();
+
     function toggleSelect() {
         let checkboxes = document.querySelectorAll('input[name="paths"]');
         let toggleButton = document.getElementById('toggleSelect');
@@ -96,5 +140,46 @@
             icon.classList.toggle('fa-chevron-down');
             icon.classList.toggle('fa-chevron-up');
         }
+    }
+
+    function generate() {
+        var apiKeyInput = document.getElementById("apiKey").value;
+
+        let reqBody = {
+            type: 'json',
+            input: swaggerContent // You no longer need to stringify it here
+        };
+
+        fetch('https://api.getpostman.com/import/openapi', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Api-Key': apiKeyInput
+            },
+            body: JSON.stringify(reqBody) // Correctly stringify the entire request body
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(body => {
+                        // Now you're correctly throwing an error with the body of the response
+                        throw new Error('API call failed with response: ' + JSON.stringify(body));
+                    });
+                } else {
+                    // Response was successful, show success message and process response JSON
+                    Swal.fire({
+                        title: 'Collection created in "My Workspace"',
+                        confirmButtonColor: '#f97316',
+                    });
+                    return response.json();
+                }
+            })
+            .then(data => {
+                // Process the successful response data here
+                console.log(data); // Example of what to do with data
+            })
+            .catch(error => {
+                // Handle any errors thrown in the process, including API call failures
+                alert('Error: ' + error.message);
+            });
     }
 </script>

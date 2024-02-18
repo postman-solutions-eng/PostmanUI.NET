@@ -1,31 +1,6 @@
-@code {
-    [Parameter] public OpenApiDocument Swagger { get; set; }
-}
-
 Variables 
 <div id="variables-content" role="tabpanel" class="tab-content">
     <div class="rounded-lg pb-32">
-        @{
-            // Assuming 'swaggerVariables' is your OpenAPI variables collection
-            var swaggerVariables = Swagger?.Components?.Schemas; // Adjust this according to your OpenAPI object structure
-
-            foreach (var variableGroup in swaggerVariables ?? new Dictionary<string, OpenApiSchema>())
-            {
-                <div class="mb-4">
-                    <div class="w-full text-left font-bold text-lg py-2">
-                        <span>@variableGroup.Key</span> <!-- Display the variable group key -->
-                        <!-- Dropdown to select a property -->
-                        <select onchange="handlePropertySelection(this.value, '@variableGroup.Key')" class="ml-2 border border-gray-300 rounded">
-                            @foreach (var property in variableGroup.Value.Properties)
-                            {
-                                <option value="@property.Key">@property.Key</option>
-                            }
-                        </select>
-                        <!-- Input to store value for the selected property -->
-                        <input type="text" id="input-@variableGroup.Key" placeholder="Enter Value" class="ml-2 px-3 py-2 border border-gray-300 rounded">
-                    </div>
-                </div>
-            }
-        }
+        
     </div>
 </div>

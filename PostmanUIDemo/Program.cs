@@ -5,7 +5,10 @@ using PostmanUIDemo;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddRazorComponents();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "My API", Version = "v1" });
+});
 
 // Needed for Postman UI to make API Call
 builder.Services.AddHttpContextAccessor();
