@@ -5,11 +5,16 @@
                 <div class="space-y-2 rounded-lg">
                     <button id="generate" onclick="generate()"
                         class="px-5 py-3 bg-orange-500 text-white rounded hover:bg-orange-400 transition duration-300">Generate</button>
+                    <button id="toggleSelect" onclick="toggleSelect()"
+                        class="px-5 py-3 bg-gray-100 text-gray-800 border rounded hover:bg-gray-200 transition duration-300">
+                        Deselect All
+                    </button>
                 </div>
-                <button id="toggleSelect" onclick="toggleSelect()"
-                    class="px-5 py-3 bg-gray-100 text-gray-800 border rounded hover:bg-gray-200 transition duration-300">
-                    Deselect All
-                </button>
+
+                <div class="flex flex-col gap-2">
+                    <span>Workspace ID</span>
+                    <input type="text" class="border" id="workspaceId">
+                </div>
             </div>
         </div>
 
@@ -144,13 +149,27 @@
 
     function generate() {
         var apiKeyInput = document.getElementById("apiKey").value;
+        var workspaceIdInput = document.getElementById("workspaceId").value;
 
         let reqBody = {
             type: 'json',
+            options: {
+                'folderStrategy': 'Path',
+                'disableOptionalParameters': true,
+                'exampleParametersResolution': 'Examples'
+            },
             input: swaggerContent // You no longer need to stringify it here
         };
 
-        fetch('https://api.getpostman.com/import/openapi', {
+        // Base URL
+        let url = 'https://api.getpostman.com/import/openapi';
+
+        // Append workspace ID as a query parameter if provided
+        if (workspaceIdInput) {
+            url += `?workspace=${workspaceIdInput}`; // Append workspace ID as query string
+        }
+
+        fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -162,7 +181,7 @@
                 if (!response.ok) {
                     return response.json().then(body => {
                         // Now you're correctly throwing an error with the body of the response
-                        throw new Error('API call failed with response: ' + JSON.stringify(body));
+                        alert('API call failed with response: ' + JSON.stringify(body));
                     });
                 } else {
                     // Response was successful, show success message and process response JSON
@@ -174,12 +193,7 @@
                 }
             })
             .then(data => {
-                // Process the successful response data here
                 console.log(data); // Example of what to do with data
-            })
-            .catch(error => {
-                // Handle any errors thrown in the process, including API call failures
-                alert('Error: ' + error.message);
             });
     }
 </script>
