@@ -1,147 +1,202 @@
-﻿@using PostmanUI.Components
+﻿@layout Layout
 
-<!DOCTYPE html>
-<html lang="en">
+<div x-data="postmanUI()" x-init="init()">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <section class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">OpenAPI Viewer</h2>
+            <div id="json-viewer" class="pt-4 text-lg overflow-auto max-h-[calc(100vh-300px)]"></div>
+        </section>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Postman UI</title>
-    <script src="https://cdn.tailwindcss.com" suppress-error="BL9992"></script>
-    <script src="https://unpkg.com/htmx.org@1.9.10" suppress-error="BL9992"></script>
-    <script id="jsonviewer" src="https://cdn.jsdelivr.net/npm/@@textea/json-viewer@3" suppress-error="BL9992"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>
+        <section class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Collection Builder</h2>
+            <div id="tab-content" role="tabpanel" class="tab-content">
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <div class="flex space-x-4">
+                            <button id="generate" @click="generate()" class="px-5 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50">
+                                Generate
+                            </button>
+                            <button id="toggleSelect" @click="toggleSelect()" class="px-5 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50">
+                                <span x-text="selectAllState ? 'Deselect All' : 'Select All'"></span>
+                            </button>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <label for="workspaceId" class="text-sm font-medium text-gray-700">Workspace ID</label>
+                            <input type="text" id="workspaceId" class="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition duration-150 ease-in-out">
+                        </div>
+                    </div>
 
-<body class="flex flex-col h-screen">
-    <div class="bg-white p-3 drop-shadow-sm flex-none">
-        <div class="flex flex-row justify-between items-center">
-            <div class="flex flex-row items-center">
-                <!-- Logo -->
-                <svg fill="none" height="32" viewBox="0 0 32 32" width="32" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="m18.0379.13033c-3.1388-.403077-6.3266.133689-9.16038 1.54242-2.83373 1.40873-5.18608 3.62614-6.75956 6.37182-1.573474 2.74573-2.297402 5.89633-2.0802323 9.05343.2171693 3.1571 1.3656823 6.179 3.3002923 8.6833 1.93461 2.5044 4.56843 4.3788 7.56838 5.3863 2.9999 1.0074 6.2312 1.1026 9.2853.2736 3.054-.8291 5.7937-2.5452 7.8724-4.9313 2.0787-2.3862 3.4031-5.3351 3.8058-8.474.5399-4.2086-.614-8.45933-3.208-11.81721-2.5939-3.35789-6.4154-5.547909-10.624-6.08836z"
-                        fill="#ff6c37" />
-                    <g fill="#fff">
-                        <path
-                            d="m11.5675 17.0112c.0062.0127.0167.0228.0295.0286.0128.0059.0273.0071.0409.0034l2.56-.552-1.0768-1.0912-1.5344 1.5344c-.0121.0082-.0207.0205-.0243.0347-.0035.0142-.0017.0292.0051.0421z" />
-                        <path
-                            d="m23.5547 6.01921c-.3567.00036-.7089.08074-1.0305.23521-.3215.15447-.6044.3791-.8277.65736-.2232.27825-.3813.60304-.4624.95045s-.0833.70859-.0064 1.05696.231.67505.4509.95599c.2199.28092.5.50902.8197.66732.3197.1584.6708.243 1.0275.2477s.71-.0707 1.0337-.2206l-1.6224-1.62239c-.0186-.01858-.0334-.04065-.0435-.06495-.01-.0243-.0152-.05035-.0152-.07665 0-.02631.0052-.05236.0152-.07666.0101-.0243.0249-.04637.0435-.06494l2.12-2.1184c-.4257-.34232-.9561-.52814-1.5024-.5264z" />
-                        <path
-                            d="m25.3483 6.8208-1.9872 1.9792 1.5584 1.5584c.1148-.0806.2219-.1717.32-.272.4271-.43.6757-1.00568.6959-1.61142.0202-.60575-.1896-1.1967-.5871-1.65418z" />
-                        <path
-                            d="m21.3723 10.4736h-.0352c-.0413-.0003-.0826.0034-.1232.0112h-.0144c-.0446.0096-.0884.0224-.1312.0384l-.0336.016c-.0322.0134-.0632.0295-.0928.048l-.0352.0224c-.0387.0267-.0751.0567-.1088.0896l-5.8928 5.8944.7296.7296 6.24-5.4768c.0353-.0309.0674-.0652.096-.1024l.0272-.0352c.0213-.0312.0406-.0638.0576-.0976.0096-.0192.0176-.0384.0256-.0576.0108-.0255.0198-.0517.0272-.0784 0-.0192.0112-.0384.016-.0576.0079-.0396.0132-.0797.016-.12v-.0528c0-.0288 0-.0576 0-.0864s0-.0384-.008-.0576c-.0296-.151-.1033-.2898-.2118-.3989s-.247-.1835-.3978-.2139h-.0304c-.0396-.0076-.0797-.0124-.12-.0144z" />
-                        <path
-                            d="m13.3963 15.1168 1.2096 1.2032 5.9088-5.9088c.1923-.188.4428-.3048.7104-.3312-1.0448-.8-2.184-.5904-7.8288 5.0368z" />
-                        <path
-                            d="m22.2075 12.0768-.072.0704-6.24 5.4752 1.0608 1.0592c2.6304-2.488 4.9648-4.8576 5.2512-6.6048z" />
-                        <path
-                            d="m6.64277 24.904c.00324.0113.0099.0214.01905.0288.00916.0075.02038.0119.03215.0128l2.71999.1872-1.5248-1.5248-1.23359 1.232c-.008.0083-.01345.0188-.01572.0301-.00226.0114-.00125.0231.00292.0339z" />
-                        <path
-                            d="m8.17394 23.3248 1.60799 1.608c.01909.0204.04463.0336.07231.0374s.05582-.0021.07969-.0166c.02493-.0124.04478-.033.05617-.0584.0114-.0254.0136-.054.00623-.0808l-.2704-1.1552c-.01751-.0749-.00955-.1535.02262-.2233.03216-.0698.0867-.1269.15498-.1623 2.81917-1.4128 5.09277-2.8672 6.76157-4.32l-1.12-1.12-2.4.5168z" />
-                        <path
-                            d="m15.2011 17.4944-.6016-.6016-.832.8304c-.006.0072-.0093.0163-.0093.0256 0 .0094.0033.0184.0093.0256.0039.0085.0107.0154.0193.0192.0085.0038.0181.0044.0271.0016z" />
-                    </g>
-                    <path
-                        d="m25.4043 8.1104c-.0082-.02518-.0217-.04831-.0396-.06784-.0178-.01953-.0397-.03501-.0641-.04539-.0243-.01039-.0506-.01544-.0771-.01481-.0265.00062-.0525.00691-.0764.01843-.0238.01152-.0449.02801-.0619.04836-.0169.02035-.0293.04409-.0363.06963s-.0085.05229-.0043.07844.0139.0511.0285.07318c.0478.09622.0668.20422.0546.31097s-.0551.20768-.1234.29063c-.0224.0271-.0367.06001-.0411.09492-.0045.0349.0011.07035.016.10221s.0386.05883.0683.07775c.0296.01892.0641.02902.0992.02912.0272-.00029.054-.00645.0786-.01805.0246-.01159.0463-.02836.0638-.04915.1133-.13769.1844-.30513.2048-.48222s-.0107-.35632-.0896-.51618z"
-                        fill="#ff6c37" />
-                </svg>
-
-                <span class="px-2 text-lg text-gray-500">Postman UI</span>
-            </div>
-            <div class="flex items-center">
-                <a target="_blank" href="https://learning.postman.com/docs/developer/postman-api/authentication/">
-                    <i class="fas fa-question-circle mr-4 text-xs"></i>
-                </a>
-                <input type="password" id="apiKey" placeholder="Enter API Key"
-                    class="px-3 py-2 border border-gray-300 rounded" onfocus="handleApiKeyFocus()"
-                    onblur="handleApiKeyBlur()">
-            </div>
-        </div>
-    </div>
-
-    <script suppress-error="BL9992">
-        let swaggerContent = @((MarkupString)SwaggerJson);
-
-        let filteredPaths = Object.entries(swaggerContent.paths)
-            .filter(([pathKey, _]) => !pathKey.includes('postman'))
-            .reduce((acc, [key, value]) => {
-                acc[key] = value;
-                return acc;
-            }, {});
-
-        swaggerContent.paths = filteredPaths;
-        let originalContent = { ...swaggerContent };
-    </script>
-
-    <div class="flex flex-row flex-grow overflow-hidden" id="conversion">
-        <div class="w-2/5 px-3 bg-gray-100 overflow-auto">
-            @if (ErrorMessage != null)
-            {
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                    <strong class="font-bold">Error!</strong>
-                    <span class="block sm:inline">@ErrorMessage</span>
-                </div>
-            }
-            else
-            {
-                <OpenApiViewer />
-            }
-        </div>
-
-        <div class="w-3/5 flex flex-col">
-            <div class="flex py-3 ml-6 border-b">
-                <button class="tablinks px-6 py-2 border-b-2 border-gray-400" onclick="openTab(event, 'Collection')">
-                    Build Collection
-                </button>
-            </div>
-
-            <div class="flex-grow overflow-auto">
-                <div id="Collection" class="p-6 tabcontent">
-                    <CollectionBuilder />
+                    <div id="swagger-paths-container" class="overflow-auto max-h-[calc(100vh-400px)]">
+                        <template x-for="(paths, groupKey) in groupedPaths" :key="groupKey">
+                            <div class="mb-4 border border-gray-200 rounded-lg overflow-hidden">
+                                <div class="bg-gray-100 px-4 py-3 flex items-center justify-between cursor-pointer" @click="toggleGroupHidden(groupKey)">
+                                    <div class="flex items-center">
+                                        <template x-if="paths.length > 5">
+                                            <input type="checkbox" name="paths" class="mr-3 h-5 w-5 accent-orange-600 border-gray-300 rounded" :checked="paths.every(path => selectedPaths[path])" @click.stop="toggleGroupSelection(groupKey, $event.target.checked)">
+                                        </template>
+                                        <h3 class="font-semibold text-lg text-gray-800" x-text="groupKey"></h3>
+                                    </div>
+                                    <i :class="{'fas fa-chevron-down': !groupHidden[groupKey], 'fas fa-chevron-up': groupHidden[groupKey]}"></i>
+                                </div>
+                                <div :class="{'hidden': groupHidden[groupKey]}" class="p-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <template x-for="path in paths" :key="path">
+                                            <div class="flex items-center p-2 rounded-md transition-colors hover:bg-gray-100">
+                                                <input type="checkbox" :id="path" name="paths" :value="path" class="mr-3 h-5 w-5 accent-orange-600 border-gray-300 rounded" :checked="selectedPaths[path]" @click="togglePath(path); updateSwaggerContent()">
+                                                <label :for="path" class="text-sm text-gray-700 flex-grow cursor-pointer" x-text="path"></label>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
-</body>
-
-
+</div>
 <script suppress-error="BL9992">
-    let originalApiKey = ''; // Variable to store the original API key
+    function postmanUI() {
+        return {
+            swaggerDocument: null,
+            selectedPaths: {},
+            swaggerContent: null,
+            groupedPaths: {},
+            groupHidden: {},
+            selectAllState: true,
 
-    function handleApiKeyFocus() {
-        var apiKeyInput = document.getElementById("apiKey");
-        originalApiKey = apiKeyInput.value; // Store the current value
-        apiKeyInput.type = "text";
-        apiKeyInput.value = ''; // Clear the input field
-    }
+            async init() {
+                await this.initSwagger();
+                this.initSelectedPaths();
+                this.initializeJsonViewer();
+                await this.loadAndDisplaySwaggerPaths();
+            },
 
-    function handleApiKeyBlur() {
-        var apiKeyInput = document.getElementById("apiKey");
-        if (!apiKeyInput.value) {
-            apiKeyInput.value = originalApiKey; // Restore the original value if no new value is entered
+            async initSwagger() {
+                const response = await fetch('/swagger/v1/swagger.json');
+                this.swaggerDocument = await response.json();
+                this.swaggerContent = { ...this.swaggerDocument };
+            },
+
+            initSelectedPaths() {
+                if (this.swaggerDocument && this.swaggerDocument.paths) {
+                    Object.keys(this.swaggerDocument.paths).forEach(path => {
+                        this.selectedPaths[ path ] = true;
+                    });
+                }
+            },
+
+            togglePath(path) {
+                this.selectedPaths[ path ] = !this.selectedPaths[ path ];
+                this.updateSwaggerContent();
+            },
+
+            initializeJsonViewer() {
+                if (this.swaggerContent) {
+                    window.viewer = new JsonViewer({ value: this.swaggerContent });
+                    window.viewer.render('#json-viewer');
+                }
+            },
+
+            updateSwaggerContent() {
+                let checkedPaths = {};
+                Object.keys(this.selectedPaths).forEach(path => {
+                    if (this.selectedPaths[ path ] && this.swaggerDocument.paths[ path ]) {
+                        checkedPaths[ path ] = this.swaggerDocument.paths[ path ];
+                    }
+                });
+                this.swaggerContent = { ...this.swaggerDocument, paths: checkedPaths };
+                if (window.viewer) {
+                    const jsonViewer = document.getElementById('json-viewer');
+                    jsonViewer.innerHTML = '';
+                    window.viewer = new JsonViewer({
+                        value: this.swaggerContent,
+                        expanded: true  // Set to true to expand all nodes initially
+                    });
+                    window.viewer.render('#json-viewer');
+                }
+            },
+
+            async loadAndDisplaySwaggerPaths() {
+                const swaggerPaths = this.swaggerContent.paths;
+
+                this.groupedPaths = Object.keys(swaggerPaths).reduce((acc, path) => {
+                    const groupKey = path.split('/')[ 1 ];
+                    if (!acc[ groupKey ]) {
+                        acc[ groupKey ] = [];
+                        this.groupHidden[ groupKey ] = false;
+                    }
+                    acc[ groupKey ].push(path);
+                    return acc;
+                }, {});
+            },
+
+            toggleSelect() {
+                this.selectAllState = !this.selectAllState;
+                Object.keys(this.groupedPaths).forEach(groupKey => {
+                    this.groupedPaths[ groupKey ].forEach(path => {
+                        this.selectedPaths[ path ] = this.selectAllState;
+                    });
+                });
+                this.updateSwaggerContent();
+            },
+
+            toggleGroupSelection(groupId, isChecked) {
+                this.groupedPaths[ groupId ].forEach(path => {
+                    this.selectedPaths[ path ] = isChecked;
+                });
+                this.updateSwaggerContent();
+            },
+
+            toggleGroupHidden(groupId) {
+                this.groupHidden[ groupId ] = !this.groupHidden[ groupId ];
+            },
+
+            async generate() {
+                const apiKeyInput = document.getElementById('apiKey').value;
+                const workspaceIdInput = document.getElementById('workspaceId').value;
+
+                let reqBody = {
+                    type: 'json',
+                    options: {
+                        'folderStrategy': 'Path',
+                        'disableOptionalParameters': true,
+                        'exampleParametersResolution': 'Examples'
+                    },
+                    input: this.swaggerContent
+                };
+
+                let url = 'https://api.getpostman.com/import/openapi';
+                if (workspaceIdInput) {
+                    url += `?workspace=${workspaceIdInput}`;
+                }
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Api-Key': apiKeyInput
+                        },
+                        body: JSON.stringify(reqBody)
+                    });
+
+                    if (!response.ok) {
+                        const body = await response.json();
+                        alert('API call failed with response: ' + JSON.stringify(body));
+                    } else {
+                        Swal.fire({
+                            title: 'Collection created in "My Workspace"',
+                            confirmButtonColor: '#f97316',
+                        });
+                        const data = await response.json();
+                        console.log(data);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }
         }
-        apiKeyInput.type = "password";
-    }
-
-    function openTab(evt, tabName) {
-        // Get all elements with class="tabcontent" and hide them
-        var tabcontent = document.getElementsByClassName("tabcontent");
-        for (var i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].classList.add("hidden");
-        }
-
-        // Get all elements with class="tablinks" and remove the class "active"
-        var tablinks = document.getElementsByClassName("tablinks");
-        for (var i = 0; i < tablinks.length; i++) {
-            tablinks[i].classList.remove("border-b-2", "border-gray-400");
-        }
-
-        // Show the current tab, and add an "active" class to the button that opened the tab
-        document.getElementById(tabName).classList.remove("hidden");
-        evt.currentTarget.classList.add("border-b-2", "border-gray-400");
     }
 </script>
-
-</html>

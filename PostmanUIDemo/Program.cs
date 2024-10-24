@@ -15,21 +15,17 @@ builder.Services.AddSwaggerGen(c =>
     c.IncludeXmlComments(modelsXmlDocPath);
 });
 
-// Needed for Postman UI to make API Call
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddHttpClient();
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
+    app.UsePostmanBuilder();
 }
 app.UseHttpsRedirection();
 
 
 app.MapEndpoints();
-app.UsePostmanBuilder();
 
 app.Run();
